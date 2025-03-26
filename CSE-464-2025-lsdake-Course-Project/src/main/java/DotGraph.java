@@ -83,6 +83,14 @@ public class DotGraph {
         nodes.add(label);
     }
 
+    // remove a single node
+    public void removeNode(String label) {
+        // should only remove a node if the node already exists (should avoid errors from trying to remove a node that DNE)
+        if (nodes.contains(label)) {
+            nodes.remove(label);
+        }
+    }
+
     // add multiple nodes
     public void addNodes(String[] labels) {
         for (String label : labels) {
