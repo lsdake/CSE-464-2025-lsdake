@@ -98,6 +98,12 @@ public class DotGraph {
         }
     }
 
+    // remove multiple nodes
+    public void removeNodes(String[] labels) {
+        for (String label : labels) {
+            removeNode(label);
+        }
+    }
 
     // add directed edge to the graph, checking for duplicates
     public void addEdge(String startLabel, String endLabel) {
