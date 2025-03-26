@@ -98,13 +98,20 @@ public class DotGraph {
         }
     }
 
-
     // add directed edge to the graph, checking for duplicates
     public void addEdge(String startLabel, String endLabel) {
         addNode(startLabel);    // if one or both of the nodes DNE yet in the graph then it gets added in
         addNode(endLabel);
         Edge edge = new Edge(startLabel, endLabel); // make the edge
         edges.add(edge);    // add it to the graph
+    }
+
+    // remove directed edge from the graph
+    public void removeEdge(String startLabel, String endLabel) {
+        Edge temp = new Edge(startLabel, endLabel);
+        if (edges.contains(temp)) {
+            edges.remove(temp);
+        }
     }
 
     // returns a string holding the data of the graph
