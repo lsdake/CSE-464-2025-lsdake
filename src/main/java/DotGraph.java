@@ -5,7 +5,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 // graph class! yay :)
 public class DotGraph {
@@ -18,6 +25,14 @@ public class DotGraph {
         public Edge(String start, String end) {
             this.start = start;
             this.end = end;
+        }
+
+        public String getStart() {
+            return start;
+        }
+
+        public String getEnd() {
+            return end;
         }
 
         @Override
@@ -38,6 +53,79 @@ public class DotGraph {
             return Objects.hash(start, end);
         }
     }
+
+    public class PathNode {
+        private String name;
+        private String parent;
+        private Boolean explored = false;
+
+        public PathNode() {
+            name = "unnamed";
+            parent = "parent";
+            explored = false;
+        }
+
+        public PathNode(String name) {
+            this.name = name;
+            explored = false;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public String getParent() {
+            return this.parent;
+        }
+
+        public Boolean getExplored() {
+            return this.explored;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public void setParent(String parent) {
+            this.parent = parent;
+        }
+
+        public void setExplored(Boolean explored) {
+            this.explored = explored;
+        }
+
+
+
+    }
+
+    // class representing a graph path
+    public class Path {
+        private List<PathNode> nodes;
+        public Path() {
+            
+        }
+
+        public Path(List<PathNode> nodes) {
+            this.nodes = nodes;
+        }
+    
+        public void addNode(PathNode newNode) {
+            nodes.add(newNode);
+        }
+
+        public List<PathNode> getNodes() {
+            return nodes;
+        }
+    
+        @Override
+        public String toString() {
+            return nodes.stream()
+                    .map(PathNode::getName)
+                    .collect(Collectors.joining(" -> "));
+        }
+    }
+
+    
 
     // data structs for nodes/edges
     private Set<String> nodes;
@@ -85,10 +173,8 @@ public class DotGraph {
 
     // remove a single node
     public void removeNode(String label) {
-        // should only remove a node if the node already exists (should avoid errors from trying to remove a node that DNE)
-        if (nodes.contains(label)) {
-            nodes.remove(label);
-        }
+        // should only remove a node if the node already exists
+        nodes.remove(label);
     }
 
     // add multiple nodes
@@ -116,10 +202,9 @@ public class DotGraph {
     // remove directed edge from the graph
     public void removeEdge(String startLabel, String endLabel) {
         Edge temp = new Edge(startLabel, endLabel);
-        if (edges.contains(temp)) {
-            edges.remove(temp);
-        }
+        edges.remove(temp);
     }
+
 
     // returns a string holding the data of the graph
     // this is the one that says how many nodes/edges there are and stuff
@@ -128,6 +213,20 @@ public class DotGraph {
         StringBuilder sb = new StringBuilder();
         sb.append("Nodes (").append(nodes.size()).append("): ").append(nodes).append("\n");
         sb.append("Edges (").append(edges.size()).append("):\n");
+        for (Edge e : edges) {
+            sb.append("  ").append(e).append("\n");
+        }
+        return sb.toString();
+    }
+
+    public String nodesToString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("").append(nodes).append("\n");
+        return sb.toString();
+    }
+
+    public String edgesToString() {
+        StringBuilder sb = new StringBuilder();
         for (Edge e : edges) {
             sb.append("  ").append(e).append("\n");
         }
@@ -185,6 +284,91 @@ public class DotGraph {
         tempDot.delete();
     }
 
+    // bfs
+
+    /*      BFS ALGORITHM (wikipedia pseudocode)
+    
+            1  procedure BFS(G, root) is
+            2      let Q be a queue
+            3      label root as explored
+            4      Q.enqueue(root)
+            5      while Q is not empty do
+            6          v := Q.dequeue()
+            7          if v is the goal then
+            8              return v
+            9          for all edges from v to w in G.adjacentEdges(v) do
+            10              if w is not labeled as explored then
+            11                  label w as explored
+            12                  w.parent := v
+            13                  Q.enqueue(w)
+
+
+     */
+
+    Path GraphSearch(String src, String dst) {
+        Path returnPath = new Path();
+
+        Queue <PathNode> q = new LinkedList<PathNode>();
+        List<PathNode> allNodes = new ArrayList<PathNode>();
+
+        List<String> allNodeNames = new ArrayList<>(nodes);
+
+        for (int i = 0; i < allNodeNames.size(); i++) {
+            allNodes.add(new PathNode(allNodeNames.get(i)));
+        }
+
+        PathNode root = allNodes.get(allNodeNames.indexOf(src));
+
+        // label root as explored
+        allNodes.get(allNodeNames.indexOf(src)).setExplored(    true);
+
+        // label root as enqueued
+        q.add(root);
+
+        while (q.isEmpty() == false) {
+            //  v := Q.dequeue()
+            PathNode v = (PathNode) q.peek();
+            returnPath.addNode(v);
+            q.remove();
+
+            //if v is the goal then { return v }
+            if (v.name.equals(dst)) {
+                return returnPath;
+            }
+
+            // for all edges from v to w in G.adjacentEdges(v) do
+            for (int i = 0; i < edges.size(); i++) {
+
+                // convert to array of edges for convenience
+                Object[] tempEdges = edges.toArray();
+
+                Edge w = (Edge) tempEdges[i];
+                String s = w.getEnd();
+                PathNode p = allNodes.get(allNodeNames.indexOf(s));
+
+                // if w is not labeled as explored then
+                if (p.getExplored() == false) {
+
+                    // label w as explored
+                    p.setExplored(true);
+                    
+                    // w.parent := v
+                    p.setParent(v.name);
+                    
+                    // Q.enqueue(w)
+                    q.add(p);
+                }
+            }
+        }
+
+        if (returnPath.nodes.size() <= 0) {
+            return null;
+        }
+        else {
+            return returnPath;
+        }
+    }
+
     // main
     public static void main(String[] args) {
         try {
@@ -196,10 +380,11 @@ public class DotGraph {
             } else {
                 // or create new graph & add data manually
                 graph = new DotGraph();
-                graph.addNodes(new String[]{"A", "B", "C"});
+                graph.addNodes(new String[]{"A", "B", "C", "D"});
                 graph.addEdge("A", "B");
                 graph.addEdge("B", "C");
                 graph.addEdge("C", "A");
+                graph.addEdge("B", "D");
             }
 
             // print graph to console
@@ -213,6 +398,8 @@ public class DotGraph {
 
             // output image
             graph.outputGraphics("graph_output.png", "png");
+
+            System.out.println(graph.GraphSearch("A", "C").toString());
 
             System.out.println("Graph outputs generated successfully!  Yay :)");
 
