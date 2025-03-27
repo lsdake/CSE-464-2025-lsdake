@@ -1,11 +1,12 @@
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class DotGraphTest {
 
@@ -109,4 +110,71 @@ public class DotGraphTest {
     }
 
 
+    // PART 2
+
+    @Test
+    public void testRemoveNode() {
+        DotGraph graph = new DotGraph();
+        // Test adding a single node
+        graph.addNode("A");
+        // Test adding multiple nodes
+        graph.addNodes(new String[] {"B", "C"});
+        String output = graph.toString();
+        assertTrue(output.contains("A"), "Graph should contain node A");
+        assertTrue(output.contains("B"), "Graph should contain node B");
+        assertTrue(output.contains("C"), "Graph should contain node C");
+
+
+        // test removing a node that exists in the graph
+        graph.removeNode("A");
+
+        // test removing multiple nodes that exist in the graph
+        graph.removeNodes(new String[] {"B", "C"});
+
+        // overwrite graph with changes
+        output = graph.nodesToString();
+
+        assertFalse(output.contains("A"), "Graph should not contain node A");
+        assertFalse(output.contains("B"), "Graph should not contain node B");
+        assertFalse(output.contains("C"), "Graph should not contain node C");
+
+        graph.addNode("A");
+
+        // test removing a node that DNE in the graph
+        graph.removeNode("D");
+
+        // teest removing multiple nodes that DNE in the graph
+
+        // overwrite graph with changes
+        output = graph.nodesToString();
+        assertFalse(output.contains("D"), "Graph contains node D");
+
+        graph.removeNodes(new String[] {"E", "F"});
+        output = graph.nodesToString();
+        assertFalse(output.contains("E"), "Graph should not contain node E");
+        assertFalse(output.contains("F"), "Graph should not contain node F");
+
+    }
+
+    @Test
+    public void testRemoveEdge() {
+        DotGraph graph = new DotGraph();
+        graph.addEdge("A", "B");
+        String output = graph.edgesToString();
+        // Check that the edge is added correctly
+        assertTrue(output.contains("A -> B"), "Graph should contain edge A -> B");
+
+
+        // remove edge that exists in the graph
+        graph.removeEdge("A", "B");
+        output = graph.edgesToString();
+        assertFalse(output.contains("A -> B"), "Graph should contain edge A -> B");
+
+        // remove edge that DNE in the graph
+        graph.removeEdge("C", "D");
+        output = graph.edgesToString();
+
+        System.out.println(output);
+        assertFalse(output.contains("C -> D"), "Graph should contain edge C -> D");
+    }
 }
