@@ -177,4 +177,42 @@ public class DotGraphTest {
         System.out.println(output);
         assertFalse(output.contains("C -> D"), "Graph should contain edge C -> D");
     }
+
+
+    @Test
+    public void testBFS() {
+        DotGraph graph = new DotGraph();
+        graph.addNodes(new String[]{"A", "B", "C", "D"});
+        graph.addEdge("A", "B");
+        graph.addEdge("B", "C");
+        graph.addEdge("C", "A");
+        graph.addEdge("B", "D");
+
+        // do bfs search
+
+        String output;
+        
+        if (graph.GraphSearch("A", "D") != null) {
+            output = graph.GraphSearch("A", "D").toString();
+        }
+        else {
+            output = "\"\"";
+        }
+        
+        assertTrue(output.contains("A -> B -> D"), "Path should be \"A -> B -> D\"");
+
+
+        // if no path exists
+        graph.addEdge("E", "F");
+
+        if (graph.GraphSearch("E", "A") != null) {
+            output = graph.GraphSearch("E", "A").toString();
+        }
+        else {
+            output = "\"\"";
+        }
+
+        assertTrue(output.contains(""), "Path should be \"\"");
+
+    }
 }

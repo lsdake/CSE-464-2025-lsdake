@@ -6,9 +6,12 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -57,6 +60,7 @@ public class DotGraph {
     public class PathNode {
         private String name;
         private String parent;
+        List<PathNode> adjacent = new ArrayList<PathNode>();
         private Boolean explored = false;
 
         public PathNode() {
@@ -78,8 +82,16 @@ public class DotGraph {
             return this.parent;
         }
 
+        public List<PathNode> getAdj() {
+            return this.adjacent;
+        }
+
         public Boolean getExplored() {
             return this.explored;
+        }
+
+        public void addAdjacent(PathNode p) {
+            this.adjacent.add(p);
         }
 
         public void setName(String name) {
@@ -100,7 +112,7 @@ public class DotGraph {
 
     // class representing a graph path
     public class Path {
-        private List<PathNode> nodes;
+        private List<PathNode> nodes = new ArrayList<PathNode>();
         public Path() {
             
         }
@@ -306,67 +318,49 @@ public class DotGraph {
      */
 
     Path GraphSearch(String src, String dst) {
-        Path returnPath = new Path();
-
-        Queue <PathNode> q = new LinkedList<PathNode>();
-        List<PathNode> allNodes = new ArrayList<PathNode>();
-
-        List<String> allNodeNames = new ArrayList<>(nodes);
-
-        for (int i = 0; i < allNodeNames.size(); i++) {
-            allNodes.add(new PathNode(allNodeNames.get(i)));
+        // Initialize all nodes and a queue
+        Map<String, PathNode> nodeMap = new HashMap<>();
+        for (String name : nodes) {
+            nodeMap.put(name, new PathNode(name));
         }
-
-        PathNode root = allNodes.get(allNodeNames.indexOf(src));
-
-        // label root as explored
-        allNodes.get(allNodeNames.indexOf(src)).setExplored(    true);
-
-        // label root as enqueued
+        Queue<PathNode> q = new LinkedList<>();
+        
+        // Start from the source
+        PathNode root = nodeMap.get(src);
+        root.setExplored(true);
         q.add(root);
-
-        while (q.isEmpty() == false) {
-            //  v := Q.dequeue()
-            PathNode v = (PathNode) q.peek();
-            returnPath.addNode(v);
-            q.remove();
-
-            //if v is the goal then { return v }
-            if (v.name.equals(dst)) {
-                return returnPath;
+        
+        // BFS loop
+        while (!q.isEmpty()) {
+            PathNode current = q.poll();
+            
+            // Check if we reached the destination
+            if (current.name.equals(dst)) {
+                // Reconstruct the path from destination back to source
+                List<PathNode> path = new ArrayList<PathNode>();
+                while (current != null) {
+                    path.add(current);
+                    current = nodeMap.get(current.getParent()); // getParent returns parent's name or null if root
+                }
+                Collections.reverse(path);
+                return new Path(path);
             }
-
-            // for all edges from v to w in G.adjacentEdges(v) do
-            for (int i = 0; i < edges.size(); i++) {
-
-                // convert to array of edges for convenience
-                Object[] tempEdges = edges.toArray();
-
-                Edge w = (Edge) tempEdges[i];
-                String s = w.getEnd();
-                PathNode p = allNodes.get(allNodeNames.indexOf(s));
-
-                // if w is not labeled as explored then
-                if (p.getExplored() == false) {
-
-                    // label w as explored
-                    p.setExplored(true);
-                    
-                    // w.parent := v
-                    p.setParent(v.name);
-                    
-                    // Q.enqueue(w)
-                    q.add(p);
+            
+            // Process all adjacent edges of current
+            for (Edge edge : edges) {
+                // Use equals() to compare strings
+                if (edge.getStart().equals(current.name)) {
+                    String adjacentName = edge.getEnd();
+                    PathNode adjacent = nodeMap.get(adjacentName);
+                    if (!adjacent.getExplored()) {
+                        adjacent.setExplored(true);
+                        adjacent.setParent(current.name);
+                        q.add(adjacent);
+                    }
                 }
             }
         }
-
-        if (returnPath.nodes.size() <= 0) {
-            return null;
-        }
-        else {
-            return returnPath;
-        }
+        return null; // No path found
     }
 
     // main
