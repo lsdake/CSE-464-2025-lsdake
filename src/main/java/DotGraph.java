@@ -315,6 +315,7 @@ public class DotGraph {
         tempDot.delete();
     }
 
+
     public Path GraphSearch(String src, String dst, Algorithm algo) {
         switch(algo) {
             case BFS:
@@ -325,7 +326,6 @@ public class DotGraph {
                 return null;
         }
     }
-
 
      // bfs search
     Path GraphSearchBFS(String src, String dst) {

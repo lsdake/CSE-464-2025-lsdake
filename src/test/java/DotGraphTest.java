@@ -178,7 +178,7 @@ public class DotGraphTest {
     }
 
     @Test
-    public void testBFS() {
+    public void testDFS() {
         DotGraph graph = new DotGraph();
         graph.addNodes(new String[]{"A", "B", "C", "D"});
         graph.addEdge("A", "B");
@@ -198,10 +198,8 @@ public class DotGraphTest {
         }
         
         assertTrue(output.contains("A -> B -> D"), "Path should be \"A -> B -> D\"");
-        
 
         graph.addEdge("E", "F");
-
         if (graph.GraphSearch("E", "A", graph.getDFS()) != null) {
             output = graph.GraphSearch("E", "A", graph.getDFS()).toString();
         }
@@ -215,7 +213,7 @@ public class DotGraphTest {
 
 
     @Test
-    public void testDFS() {
+    public void testBFS() {
         DotGraph graph = new DotGraph();
         graph.addNodes(new String[]{"A", "B", "C", "D"});
         graph.addEdge("A", "B");
@@ -285,4 +283,3 @@ public class DotGraphTest {
         // dfs path should be A -> C -> E -> F 
         assertTrue(dfsOutput.contains("A -> C -> E -> F"), "DFS path should be \"A -> C -> E -> F\"");
     }
-}
