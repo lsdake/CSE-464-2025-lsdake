@@ -15,11 +15,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 // graph class! yay :)
 public class DotGraph {
 
+    // enum for BFS/DFS search stuff
+    public enum Algorithm {
+        BFS,
+        DFS
+    }
+    
     // class representing a graph edge
     public static class Edge {
         String start;
@@ -131,6 +138,11 @@ public class DotGraph {
     
         @Override
         public String toString() {
+
+            if (nodes == null) {
+                return "";
+            }
+
             return nodes.stream()
                     .map(PathNode::getName)
                     .collect(Collectors.joining(" -> "));
@@ -147,6 +159,13 @@ public class DotGraph {
     public DotGraph() {
         nodes = new LinkedHashSet<>();
         edges = new LinkedHashSet<>();
+    }
+
+    Algorithm getBFS() {
+        return Algorithm.BFS;
+    }
+    Algorithm getDFS() {
+        return Algorithm.DFS;
     }
 
     // parse dot file and creates its graph
@@ -296,28 +315,20 @@ public class DotGraph {
         tempDot.delete();
     }
 
-    // bfs
 
-    /*      BFS ALGORITHM (wikipedia pseudocode)
-    
-            1  procedure BFS(G, root) is
-            2      let Q be a queue
-            3      label root as explored
-            4      Q.enqueue(root)
-            5      while Q is not empty do
-            6          v := Q.dequeue()
-            7          if v is the goal then
-            8              return v
-            9          for all edges from v to w in G.adjacentEdges(v) do
-            10              if w is not labeled as explored then
-            11                  label w as explored
-            12                  w.parent := v
-            13                  Q.enqueue(w)
+    public Path GraphSearch(String src, String dst, Algorithm algo) {
+        switch(algo) {
+            case BFS:
+                return GraphSearchBFS(src, dst);
+            case DFS:
+                return GraphSearchDFS(src, dst);
+            default:
+                return null;
+        }
+    }
 
-
-     */
-
-    Path GraphSearch(String src, String dst) {
+     // bfs search
+    Path GraphSearchBFS(String src, String dst) {
         // Initialize all nodes and a queue
         Map<String, PathNode> nodeMap = new HashMap<>();
         for (String name : nodes) {
@@ -363,6 +374,58 @@ public class DotGraph {
         return null; // No path found
     }
 
+    // dfs search
+    Path GraphSearchDFS(String src, String dst) {
+        // Initialize all nodes in a map
+        Map<String, PathNode> nodeMap = new HashMap<>();
+        for (String name : nodes) {
+            nodeMap.put(name, new PathNode(name));
+        }
+        
+        // Use a stack for DFS
+        Stack<PathNode> stack = new Stack<>();
+        
+        // Start from the source node
+        PathNode root = nodeMap.get(src);
+        root.setExplored(true);
+        stack.push(root);
+        
+        // DFS loop
+        while (!stack.isEmpty()) {
+            PathNode current = stack.pop();
+            
+            // Check if we reached the destination
+            if (current.name.equals(dst)) {
+                // Reconstruct the path from destination back to source using parent pointers
+                List<PathNode> path = new ArrayList<>();
+                while (current != null) {
+                    path.add(current);
+                    current = nodeMap.get(current.getParent()); // getParent returns parent's name or null if root
+                }
+                Collections.reverse(path);
+                return new Path(path);
+            }
+            
+            // Process all adjacent edges of current
+            // (Using a loop over all edges; adjust if you have a direct way to get adjacent nodes)
+            for (Edge edge : edges) {
+                // Check if the current node is the start of the edge using equals() for string comparison
+                if (edge.getStart().equals(current.name)) {
+                    String adjacentName = edge.getEnd();
+                    PathNode adjacent = nodeMap.get(adjacentName);
+                    if (!adjacent.getExplored()) {
+                        adjacent.setExplored(true);
+                        adjacent.setParent(current.name);
+                        stack.push(adjacent);
+                    }
+                }
+            }
+        }
+        return null; // No path found
+    }
+
+
+
     // main
     public static void main(String[] args) {
         try {
@@ -393,7 +456,11 @@ public class DotGraph {
             // output image
             graph.outputGraphics("graph_output.png", "png");
 
-            System.out.println(graph.GraphSearch("A", "C").toString());
+            System.out.println(graph.GraphSearch("A", "C", Algorithm.BFS).toString());
+
+            System.out.println("Graph outputs generated successfully!  Yay :)");
+
+            System.out.println(graph.GraphSearch("A", "C", Algorithm.DFS).toString());
 
             System.out.println("Graph outputs generated successfully!  Yay :)");
 
