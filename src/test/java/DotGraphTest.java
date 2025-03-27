@@ -283,3 +283,4 @@ public class DotGraphTest {
         // dfs path should be A -> C -> E -> F 
         assertTrue(dfsOutput.contains("A -> C -> E -> F"), "DFS path should be \"A -> C -> E -> F\"");
     }
+}
