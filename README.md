@@ -10,6 +10,57 @@ mvn package
 
 ## Expected Outputs for Each Feature:
 
+### Adding/Removing Nodes & Edges:
+* Given an empty DotGraph called graph:
+```
+DotGraph graph;
+```
+
+* Adding one or more nodes:
+
+    * To add one node "X":
+    ```
+    graph.addNode("X");
+    ```
+
+    * To add two or more nodes "A", "B", ... etc:
+    ```
+    graph.addNodes("A", "B", "C");  // adds nodes A, B, and C to the graph
+    ```
+
+* Adding an edge:
+    ```
+    graph.addNode("A");
+    graph.addNode("B");
+    graph.addEdge("A", "B");
+    ```
+    or
+    ```
+    graph.addEdge("A", "B");    // automatically adds the nodes if they don't exist in the graph
+    ```
+
+* Removing one or more nodes:
+
+    * To remove one node "X":
+    ```
+    graph.removeNode("X");  // if X DNE in the graph, nothing happens
+    ```
+    
+    * To remove two or more nodes "A", "B", ... etc:
+    ```
+    graph.removeNodes(new String[] {"A", B", "C"});
+    ```
+
+* Removing an edge:
+
+    * To remove an edge between A and B
+    ```
+    graph.removeEdge("A", "B");
+    ```
+
+
+### BFS/DFS:
+
 * Given a graph.dot file as follows:
 ```
 digraph G {
