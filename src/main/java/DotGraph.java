@@ -369,6 +369,56 @@ public class DotGraph {
         }
     }
 
+    // dfs search
+    Path GraphSearch2(String src, String dst) {
+        // Initialize all nodes in a map
+        Map<String, PathNode> nodeMap = new HashMap<>();
+        for (String name : nodes) {
+            nodeMap.put(name, new PathNode(name));
+        }
+        
+        // Use a stack for DFS
+        Stack<PathNode> stack = new Stack<>();
+        
+        // Start from the source node
+        PathNode root = nodeMap.get(src);
+        root.setExplored(true);
+        stack.push(root);
+        
+        // DFS loop
+        while (!stack.isEmpty()) {
+            PathNode current = stack.pop();
+            
+            // Check if we reached the destination
+            if (current.name.equals(dst)) {
+                // Reconstruct the path from destination back to source using parent pointers
+                List<PathNode> path = new ArrayList<>();
+                while (current != null) {
+                    path.add(current);
+                    current = nodeMap.get(current.getParent()); // getParent returns parent's name or null if root
+                }
+                Collections.reverse(path);
+                return new Path(path);
+            }
+            
+            // Process all adjacent edges of current
+            // (Using a loop over all edges; adjust if you have a direct way to get adjacent nodes)
+            for (Edge edge : edges) {
+                // Check if the current node is the start of the edge using equals() for string comparison
+                if (edge.getStart().equals(current.name)) {
+                    String adjacentName = edge.getEnd();
+                    PathNode adjacent = nodeMap.get(adjacentName);
+                    if (!adjacent.getExplored()) {
+                        adjacent.setExplored(true);
+                        adjacent.setParent(current.name);
+                        stack.push(adjacent);
+                    }
+                }
+            }
+        }
+        return null; // No path found
+    }
+
     // main
     public static void main(String[] args) {
         try {
