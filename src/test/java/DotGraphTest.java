@@ -13,9 +13,9 @@ public class DotGraphTest {
     @Test
     public void testAddNodeAndAddNodes() {
         DotGraph graph = new DotGraph();
-        // Test adding a single node
+        // test w/ single node
         graph.addNode("A");
-        // Test adding multiple nodes
+        // test w/ multiple nodes
         graph.addNodes(new String[] {"B", "C"});
         String output = graph.toString();
         assertTrue(output.contains("A"), "Graph should contain node A");
@@ -28,13 +28,12 @@ public class DotGraphTest {
         DotGraph graph = new DotGraph();
         graph.addEdge("A", "B");
         String output = graph.toString();
-        // Check that the edge is added correctly
         assertTrue(output.contains("A -> B"), "Graph should contain edge A -> B");
     }
 
     @Test
     public void testParseGraph() throws IOException {
-        // Create a temporary DOT file for testing
+        // create temp dot file for testing
         File tempFile = File.createTempFile("testGraph", ".dot");
         try (FileWriter writer = new FileWriter(tempFile)) {
             writer.write("digraph G {\n");
@@ -42,13 +41,13 @@ public class DotGraphTest {
             writer.write("    B -> C;\n");
             writer.write("}\n");
         }
-        // Parse the temporary DOT file
+        // parse temp dot file
         DotGraph graph = DotGraph.parseGraph(tempFile.getAbsolutePath());
         String output = graph.toString();
         assertTrue(output.contains("A"), "Graph should contain node A");
         assertTrue(output.contains("B"), "Graph should contain node B");
         assertTrue(output.contains("C"), "Graph should contain node C");
-        // Delete temporary file after testing
+        // delete temp file
         tempFile.delete();
     }
 
@@ -60,7 +59,7 @@ public class DotGraphTest {
         graph.outputDOTGraph(dotFilePath);
         String content = Files.readString(Paths.get(dotFilePath));
         assertTrue(content.contains("A -> B"), "DOT file should contain edge A -> B");
-        // Clean up test file
+        // cleanup
         new File(dotFilePath).delete();
     }
 
@@ -72,13 +71,13 @@ public class DotGraphTest {
         graph.outputGraphics(pngFilePath, "png");   // outputs the drawing to the filepath
         File pngFile = new File(pngFilePath);
         assertTrue(pngFile.exists(), "PNG file should exist after outputGraphics is called");
-        // Clean up test file
+        // cleanup
         pngFile.delete();
     }
 
     @Test
     public void testParseGraphComplex() throws IOException {
-        // Create a temporary DOT file for testing
+        // create temp got file for testing
         File tempFile = File.createTempFile("test", ".dot");
         try (FileWriter writer = new FileWriter(tempFile)) {
             writer.write("digraph {\n");
@@ -117,7 +116,7 @@ public class DotGraphTest {
         DotGraph graph = new DotGraph();
         // Test adding a single node
         graph.addNode("A");
-        // Test adding multiple nodes
+        // test w/ multiple nodes
         graph.addNodes(new String[] {"B", "C"});
         String output = graph.toString();
         assertTrue(output.contains("A"), "Graph should contain node A");
@@ -161,7 +160,7 @@ public class DotGraphTest {
         DotGraph graph = new DotGraph();
         graph.addEdge("A", "B");
         String output = graph.edgesToString();
-        // Check that the edge is added correctly
+        // check that its happy
         assertTrue(output.contains("A -> B"), "Graph should contain edge A -> B");
 
 
@@ -179,7 +178,7 @@ public class DotGraphTest {
     }
 
     @Test
-    public void testDFS() {
+    public void testBFS() {
         DotGraph graph = new DotGraph();
         graph.addNodes(new String[]{"A", "B", "C", "D"});
         graph.addEdge("A", "B");
@@ -187,11 +186,12 @@ public class DotGraphTest {
         graph.addEdge("C", "A");
         graph.addEdge("B", "D");
 
-        // do dfs search
+        // do bfs search
+
         String output;
         
-        if (graph.GraphSearch("A", "D") != null) {
-            output = graph.GraphSearch("A", "D").toString();
+        if (graph.GraphSearch("A", "D", graph.getBFS()) != null) {
+            output = graph.GraphSearch("A", "D", graph.getBFS()).toString();
         }
         else {
             output = "\"\"";
@@ -202,8 +202,8 @@ public class DotGraphTest {
 
         graph.addEdge("E", "F");
 
-        if (graph.GraphSearch("E", "A") != null) {
-            output = graph.GraphSearch("E", "A").toString();
+        if (graph.GraphSearch("E", "A", graph.getDFS()) != null) {
+            output = graph.GraphSearch("E", "A", graph.getDFS()).toString();
         }
         else {
             output = "\"\"";
@@ -211,5 +211,78 @@ public class DotGraphTest {
 
         assertTrue(output.contains(""), "Path should be \"\"");
 
+    }
+
+
+    @Test
+    public void testDFS() {
+        DotGraph graph = new DotGraph();
+        graph.addNodes(new String[]{"A", "B", "C", "D"});
+        graph.addEdge("A", "B");
+        graph.addEdge("B", "C");
+        graph.addEdge("C", "A");
+        graph.addEdge("B", "D");
+
+        // do bfs search
+
+        String output;
+        
+        if (graph.GraphSearch("A", "D", graph.getBFS()) != null) {
+            output = graph.GraphSearch("A", "D", graph.getBFS()).toString();
+        }
+        else {
+            output = "\"\"";
+        }
+        
+        assertTrue(output.contains("A -> B -> D"), "Path should be \"A -> B -> D\"");
+        
+        graph.addEdge("E", "F");
+
+        if (graph.GraphSearch("E", "A", graph.getBFS()) != null) {
+            output = graph.GraphSearch("E", "A", graph.getBFS()).toString();
+        }
+        else {
+            output = "\"\"";
+        }
+
+        assertTrue(output.contains(""), "Path should be \"\"");
+
+    }
+
+    @Test
+    public void testBFSvsDFS() {    // make sure they find different paths if it calls for it
+        DotGraph graph = new DotGraph();
+        // add nodes
+        graph.addNodes(new String[]{"A", "B", "C", "D", "E", "F"});
+        
+        // this graph should have a different path for bfs and dfs
+        // bfs path = A -> B -> D -> F
+        // dfs path = A -> C -> E -> F
+        graph.addEdge("A", "B");
+        graph.addEdge("A", "C");
+        graph.addEdge("B", "D");
+        graph.addEdge("C", "E");
+        graph.addEdge("D", "F");
+        graph.addEdge("E", "F");
+
+        // do the dfs search
+        String dfsOutput;
+        if (graph.GraphSearch("A", "F", graph.getDFS()) != null) {
+            dfsOutput = graph.GraphSearch("A", "F", graph.getDFS()).toString();
+        } else {
+            dfsOutput = "";
+        }
+
+        String bfsOutput;
+        if (graph.GraphSearch("A", "F", graph.getBFS()) != null) {
+            bfsOutput = graph.GraphSearch("A", "F", graph.getBFS()).toString();
+        } else {
+            bfsOutput = "";
+        }
+
+        // bfs path should be A -> B -> D -> F
+        assertTrue(bfsOutput.contains("A -> B -> D -> F"), "BFS path should be \"A -> B -> E -> F\"");
+        // dfs path should be A -> C -> E -> F 
+        assertTrue(dfsOutput.contains("A -> C -> E -> F"), "DFS path should be \"A -> C -> E -> F\"");
     }
 }
