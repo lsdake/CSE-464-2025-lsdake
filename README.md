@@ -3,8 +3,43 @@
 ## Compilation:
 
 run the following command:
-* mvn package
- 
+
+```
+mvn package
+```
+
+## Expected Outputs for Each Feature:
+
+* Given a graph.dot file as follows:
+```
+digraph G {
+    A -> B;
+    A -> C;
+    B -> D;
+    C -> E;
+    D -> F;
+    E -> F;
+}
+```
+
+* BFS
+    ```
+    System.out.println(graph.GraphSearch("A", "F", graph.getBFS()).toString());
+    ```
+    should output
+    ```
+    A -> B -> D -> F
+    ```
+
+* DFS
+    ```
+    System.out.println(graph.GraphSearch("A", "F", graph.getDFS()).toString());
+    ```
+    should output
+    ```
+    A -> C -> E -> F 
+    ```
+
 ## Github Commits for Each Feature:
 * Part 1 Features:
     * https://github.com/lsdake/CSE-464-2025-lsdake/commit/33eb34ac3e1f0f48384b4350a616825f714bd80d
