@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,17 +18,25 @@ public class DotGraph {
     // enum for BFS/DFS search stuff
     public enum Algorithm { BFS, DFS }
 
-    private static final String DOT_HEADER = "digraph {";  // Replace magic string
+    private static final String DOT_HEADER = "digraph {";
     private static final String DOT_FOOTER = "}";
 
-    // Encapsulated data structs for nodes/edges
+    // data structs for nodes/edges
     private final Set<String> nodes;
     private final Set<Edge> edges;
+
+    private final Map<Algorithm, GraphSearchTemplate> searchStrats;
+
 
     // graph constructor
     public DotGraph() {
         nodes = new LinkedHashSet<>();
         edges = new LinkedHashSet<>();
+
+        // gotta init searchStrats since its final
+        searchStrats = new HashMap<>();
+        searchStrats.put(Algorithm.BFS, new BFSGraphSearch());
+        searchStrats.put(Algorithm.DFS, new DFSGraphSearch());
     }
 
     Algorithm getBFS() { return Algorithm.BFS; }
@@ -189,13 +199,13 @@ public class DotGraph {
                 .collect(Collectors.toList());
     }
 
-    // delegates BFS/DFS searches to template-based implementations
+    // delegates BFS/DFS searches to template-based implementations w/ strategy pattern
     public Path GraphSearch(String src, String dst, Algorithm algo) {
-        switch (algo) {
-            case BFS: return new BFSGraphSearch().search(this, src, dst);
-            case DFS: return new DFSGraphSearch().search(this, src, dst);
-            default:   return null;
+        GraphSearchTemplate strategy = searchStrats.get(algo);
+        if (strategy == null) {     // if its not a real strat then it explodes but this shoooould never happen
+            throw new IllegalArgumentException("Unknown algorithm: " + algo);
         }
+        return strategy.search(this, src, dst);
     }
 
     // main
