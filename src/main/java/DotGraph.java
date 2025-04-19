@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class DotGraph {
 
     // enum for BFS/DFS search stuff
-    public enum Algorithm { BFS, DFS }
+    public enum Algorithm { BFS, DFS, RANDOM }
 
     private static final String DOT_HEADER = "digraph {";
     private static final String DOT_FOOTER = "}";
@@ -37,10 +37,12 @@ public class DotGraph {
         searchStrats = new HashMap<>();
         searchStrats.put(Algorithm.BFS, new BFSGraphSearch());
         searchStrats.put(Algorithm.DFS, new DFSGraphSearch());
+        searchStrats.put(Algorithm.RANDOM, new RWGraphSearch());
     }
 
     Algorithm getBFS() { return Algorithm.BFS; }
     Algorithm getDFS() { return Algorithm.DFS; }
+    Algorithm getRANDOM() { return Algorithm.RANDOM; }
 
     // parse dot file and creates its graph
      
@@ -199,7 +201,7 @@ public class DotGraph {
                 .collect(Collectors.toList());
     }
 
-    // delegates BFS/DFS searches to template-based implementations w/ strategy pattern
+    // delegates BFS/DFS searches to template-based implementations using strategy pattern
     public Path GraphSearch(String src, String dst, Algorithm algo) {
         GraphSearchTemplate strategy = searchStrats.get(algo);
         if (strategy == null) {     // if its not a real strat then it explodes but this shoooould never happen
@@ -243,6 +245,10 @@ public class DotGraph {
             System.out.println("Graph outputs generated successfully!  Yay :)");
 
             System.out.println(graph.GraphSearch("A", "C", Algorithm.DFS).toString());
+
+            System.out.println("Graph outputs generated successfully!  Yay :)");
+
+            System.out.println(graph.GraphSearch("A", "C", Algorithm.RANDOM).toString());
 
             System.out.println("Graph outputs generated successfully!  Yay :)");
 
