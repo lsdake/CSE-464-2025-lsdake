@@ -5,184 +5,59 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Queue;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 // graph class! yay :)
 public class DotGraph {
 
     // enum for BFS/DFS search stuff
-    public enum Algorithm {
-        BFS,
-        DFS
-    }
-    
-    // class representing a graph edge
-    public static class Edge {
-        String start;
-        String end;
+    public enum Algorithm { BFS, DFS, RANDOM }
 
-        public Edge(String start, String end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        public String getStart() {
-            return start;
-        }
-
-        public String getEnd() {
-            return end;
-        }
-
-        @Override
-        public String toString() {
-            return start + " -> " + end;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Edge)) return false;
-            Edge edge = (Edge) o;
-            return start.equals(edge.start) && end.equals(edge.end);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(start, end);
-        }
-    }
-
-    public class PathNode {
-        private String name;
-        private String parent;
-        List<PathNode> adjacent = new ArrayList<PathNode>();
-        private Boolean explored = false;
-
-        public PathNode() {
-            name = "unnamed";
-            parent = "parent";
-            explored = false;
-        }
-
-        public PathNode(String name) {
-            this.name = name;
-            explored = false;
-        }
-
-        public String getName() {
-            return this.name;
-        }
-
-        public String getParent() {
-            return this.parent;
-        }
-
-        public List<PathNode> getAdj() {
-            return this.adjacent;
-        }
-
-        public Boolean getExplored() {
-            return this.explored;
-        }
-
-        public void addAdjacent(PathNode p) {
-            this.adjacent.add(p);
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public void setParent(String parent) {
-            this.parent = parent;
-        }
-
-        public void setExplored(Boolean explored) {
-            this.explored = explored;
-        }
-
-
-
-    }
-
-    // class representing a graph path
-    public class Path {
-        private List<PathNode> nodes = new ArrayList<PathNode>();
-        public Path() {
-            
-        }
-
-        public Path(List<PathNode> nodes) {
-            this.nodes = nodes;
-        }
-    
-        public void addNode(PathNode newNode) {
-            nodes.add(newNode);
-        }
-
-        public List<PathNode> getNodes() {
-            return nodes;
-        }
-    
-        @Override
-        public String toString() {
-
-            if (nodes == null) {
-                return "";
-            }
-
-            return nodes.stream()
-                    .map(PathNode::getName)
-                    .collect(Collectors.joining(" -> "));
-        }
-    }
-
-    
+    private static final String DOT_HEADER = "digraph {";
+    private static final String DOT_FOOTER = "}";
 
     // data structs for nodes/edges
-    private Set<String> nodes;
-    private Set<Edge> edges;
+    private final Set<String> nodes;
+    private final Set<Edge> edges;
+
+    private final Map<Algorithm, GraphSearchTemplate> searchStrats;
+
 
     // graph constructor
     public DotGraph() {
         nodes = new LinkedHashSet<>();
         edges = new LinkedHashSet<>();
+
+        // gotta init searchStrats since its final
+        searchStrats = new HashMap<>();
+        searchStrats.put(Algorithm.BFS, new BFSGraphSearch());
+        searchStrats.put(Algorithm.DFS, new DFSGraphSearch());
+        searchStrats.put(Algorithm.RANDOM, new RWGraphSearch());
     }
 
-    Algorithm getBFS() {
-        return Algorithm.BFS;
-    }
-    Algorithm getDFS() {
-        return Algorithm.DFS;
-    }
+    Algorithm getBFS() { return Algorithm.BFS; }
+    Algorithm getDFS() { return Algorithm.DFS; }
+    Algorithm getRANDOM() { return Algorithm.RANDOM; }
 
     // parse dot file and creates its graph
+     
     public static DotGraph parseGraph(String filepath) throws IOException {
         DotGraph graph = new DotGraph();
         List<String> lines = Files.readAllLines(Paths.get(filepath));
 
         for (String line : lines) {
             line = line.trim();
-            // skip empty lines
+            // skip empty or brace/digraph lines
             if (line.isEmpty() || line.startsWith("digraph") || line.startsWith("{") || line.startsWith("}")) {
                 continue;
             }
             // remove trailing semicolon
-            if (line.endsWith(";")) {
-                line = line.substring(0, line.length() - 1);
-            }
+            line = stripSemicolon(line);
             // in format "x -> y"
             String[] parts = line.split("->");
             if (parts.length == 2) {
@@ -197,6 +72,11 @@ public class DotGraph {
         return graph;
     }
 
+    /** Helper to strip semicolon (extracted method) */
+    private static String stripSemicolon(String line) {
+        return line.endsWith(";") ? line.substring(0, line.length() - 1) : line;
+    }
+
     // add a single node; will NOT add duplicates
     public void addNode(String label) {
         nodes.add(label);
@@ -204,7 +84,6 @@ public class DotGraph {
 
     // remove a single node
     public void removeNode(String label) {
-        // should only remove a node if the node already exists
         nodes.remove(label);
     }
 
@@ -224,21 +103,38 @@ public class DotGraph {
 
     // add directed edge to the graph, checking for duplicates
     public void addEdge(String startLabel, String endLabel) {
-        addNode(startLabel);    // if one or both of the nodes DNE yet in the graph then it gets added in
+        addNode(startLabel);
         addNode(endLabel);
-        Edge edge = new Edge(startLabel, endLabel); // make the edge
-        edges.add(edge);    // add it to the graph
+        edges.add(new Edge(startLabel, endLabel));
     }
 
     // remove directed edge from the graph
     public void removeEdge(String startLabel, String endLabel) {
-        Edge temp = new Edge(startLabel, endLabel);
-        edges.remove(temp);
+        edges.remove(new Edge(startLabel, endLabel));
+    }
+
+    public Set<String> getNodes() {
+        return nodes;
+    }
+
+    // output all nodes to a string
+    public String nodesToString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("").append(nodes).append("\n");
+        return sb.toString();
+    }
+
+    // output all edges to a string
+    public String edgesToString() {
+        StringBuilder sb = new StringBuilder();
+        for (Edge e : edges) {
+            sb.append("  ").append(e).append("\n");
+        }
+        return sb.toString();
     }
 
 
     // returns a string holding the data of the graph
-    // this is the one that says how many nodes/edges there are and stuff
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -250,55 +146,38 @@ public class DotGraph {
         return sb.toString();
     }
 
-    public String nodesToString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("").append(nodes).append("\n");
-        return sb.toString();
-    }
-
-    public String edgesToString() {
-        StringBuilder sb = new StringBuilder();
-        for (Edge e : edges) {
-            sb.append("  ").append(e).append("\n");
-        }
-        return sb.toString();
-    }
-
-    // output graph to .txt file
-    public void outputGraph(String filepath) throws IOException {
-        try (FileWriter writer = new FileWriter(filepath)) {    // writes it lol
-            writer.write(this.toString());
+    // outputs the graph in text format
+    public void outputGraphToText(String filepath) throws IOException {
+        try (FileWriter writer = new FileWriter(filepath)) {
+            writer.write(toString());
         }
     }
 
     // output graph to dot file
     public void outputDOTGraph(String filepath) throws IOException {
         try (FileWriter writer = new FileWriter(filepath)) {
-            writer.write("digraph {\n");
+            writer.write(DOT_HEADER + "\n");
             // write nodes
             for (String node : nodes) {
                 writer.write("    " + node + ";\n");
             }
             // write edges
             for (Edge e : edges) {
-                writer.write("    " + e.start + " -> " + e.end + ";\n");
+                writer.write("    " + e.getStart() + " -> " + e.getEnd() + ";\n");
             }
-            writer.write("}");
+            writer.write(DOT_FOOTER);
         }
     }
 
     // output graph to image file (i will say idk if .jpg works but ik .png does lol so yay)
     public void outputGraphics(String filepath, String format) throws IOException, InterruptedException {
-        // write dot file to a temp file
         File tempDot = File.createTempFile("tempGraph", ".dot");
         outputDOTGraph(tempDot.getAbsolutePath());
 
-        // build graphviz command
-        // i.e: dot -T png tempGraph.dot -o output.png
         ProcessBuilder pb = new ProcessBuilder("dot", "-T" + format, tempDot.getAbsolutePath(), "-o", filepath);
         Process process = pb.start();
 
-        // write in/out errors so we can see them
+        // capture errors
         BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
         String s;
         StringBuilder errorOutput = new StringBuilder();
@@ -311,120 +190,25 @@ public class DotGraph {
             throw new RuntimeException("Graphviz process failed: " + errorOutput.toString());
         }
 
-        // delete temp file
         tempDot.delete();
     }
 
+    // return all neighbors of a given node
+    public List<String> getNeighbors(String node) {
+        return edges.stream()
+                .filter(e -> e.getStart().equals(node))
+                .map(Edge::getEnd)
+                .collect(Collectors.toList());
+    }
 
+    // delegates BFS/DFS searches to template-based implementations using strategy pattern
     public Path GraphSearch(String src, String dst, Algorithm algo) {
-        switch(algo) {
-            case BFS:
-                return GraphSearchBFS(src, dst);
-            case DFS:
-                return GraphSearchDFS(src, dst);
-            default:
-                return null;
+        GraphSearchTemplate strategy = searchStrats.get(algo);
+        if (strategy == null) {     // if its not a real strat then it explodes but this shoooould never happen
+            throw new IllegalArgumentException("Unknown algorithm: " + algo);
         }
+        return strategy.search(this, src, dst);
     }
-
-     // bfs search
-    Path GraphSearchBFS(String src, String dst) {
-        // Initialize all nodes and a queue
-        Map<String, PathNode> nodeMap = new HashMap<>();
-        for (String name : nodes) {
-            nodeMap.put(name, new PathNode(name));
-        }
-        Queue<PathNode> q = new LinkedList<>();
-        
-        // Start from the source
-        PathNode root = nodeMap.get(src);
-        root.setExplored(true);
-        q.add(root);
-        
-        // BFS loop
-        while (!q.isEmpty()) {
-            PathNode current = q.poll();
-            
-            // Check if we reached the destination
-            if (current.name.equals(dst)) {
-                // Reconstruct the path from destination back to source
-                List<PathNode> path = new ArrayList<PathNode>();
-                while (current != null) {
-                    path.add(current);
-                    current = nodeMap.get(current.getParent()); // getParent returns parent's name or null if root
-                }
-                Collections.reverse(path);
-                return new Path(path);
-            }
-            
-            // Process all adjacent edges of current
-            for (Edge edge : edges) {
-                // Use equals() to compare strings
-                if (edge.getStart().equals(current.name)) {
-                    String adjacentName = edge.getEnd();
-                    PathNode adjacent = nodeMap.get(adjacentName);
-                    if (!adjacent.getExplored()) {
-                        adjacent.setExplored(true);
-                        adjacent.setParent(current.name);
-                        q.add(adjacent);
-                    }
-                }
-            }
-        }
-        return null; // No path found
-    }
-
-    // dfs search
-    Path GraphSearchDFS(String src, String dst) {
-        // Initialize all nodes in a map
-        Map<String, PathNode> nodeMap = new HashMap<>();
-        for (String name : nodes) {
-            nodeMap.put(name, new PathNode(name));
-        }
-        
-        // Use a stack for DFS
-        Stack<PathNode> stack = new Stack<>();
-        
-        // Start from the source node
-        PathNode root = nodeMap.get(src);
-        root.setExplored(true);
-        stack.push(root);
-        
-        // DFS loop
-        while (!stack.isEmpty()) {
-            PathNode current = stack.pop();
-            
-            // Check if we reached the destination
-            if (current.name.equals(dst)) {
-                // Reconstruct the path from destination back to source using parent pointers
-                List<PathNode> path = new ArrayList<>();
-                while (current != null) {
-                    path.add(current);
-                    current = nodeMap.get(current.getParent()); // getParent returns parent's name or null if root
-                }
-                Collections.reverse(path);
-                return new Path(path);
-            }
-            
-            // Process all adjacent edges of current
-            // (Using a loop over all edges; adjust if you have a direct way to get adjacent nodes)
-            for (Edge edge : edges) {
-                // Check if the current node is the start of the edge using equals() for string comparison
-                if (edge.getStart().equals(current.name)) {
-                    String adjacentName = edge.getEnd();
-                    PathNode adjacent = nodeMap.get(adjacentName);
-                    if (!adjacent.getExplored()) {
-                        adjacent.setExplored(true);
-                        adjacent.setParent(current.name);
-                        stack.push(adjacent);
-                    }
-                }
-            }
-        }
-        return null; // No path found
-    }
-
-
 
     // main
     public static void main(String[] args) {
@@ -448,7 +232,7 @@ public class DotGraph {
             System.out.println(graph.toString());
 
             // write text output to console
-            graph.outputGraph("graph_output.txt");
+            graph.outputGraphToText("graph_output.txt");
 
             // write dot file
             graph.outputDOTGraph("graph_output.dot");
@@ -461,6 +245,10 @@ public class DotGraph {
             System.out.println("Graph outputs generated successfully!  Yay :)");
 
             System.out.println(graph.GraphSearch("A", "C", Algorithm.DFS).toString());
+
+            System.out.println("Graph outputs generated successfully!  Yay :)");
+
+            System.out.println(graph.GraphSearch("A", "C", Algorithm.RANDOM).toString());
 
             System.out.println("Graph outputs generated successfully!  Yay :)");
 
