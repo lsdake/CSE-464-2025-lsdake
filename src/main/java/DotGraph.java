@@ -9,14 +9,15 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
-import java.util.stream.Collectors;
+import  java.util.stream.Collectors;
 
 // graph class! yay :)
 public class DotGraph {
 
     // enum for BFS/DFS search stuff
-    public enum Algorithm { BFS, DFS, RANDOM }
+    public enum Algorithm { BFS, DFS, RANDOM_FULL, RANDOM_UNVISITED, RANDOM_BACKTRACK }
 
     private static final String DOT_HEADER = "digraph {";
     private static final String DOT_FOOTER = "}";
@@ -37,12 +38,16 @@ public class DotGraph {
         searchStrats = new HashMap<>();
         searchStrats.put(Algorithm.BFS, new BFSGraphSearch());
         searchStrats.put(Algorithm.DFS, new DFSGraphSearch());
-        searchStrats.put(Algorithm.RANDOM, new RWGraphSearch());
+        searchStrats.put(Algorithm.RANDOM_FULL, new RWGraphSearch(RWGraphSearch.Mode.FULLY_RANDOM));
+        searchStrats.put(Algorithm.RANDOM_UNVISITED, new RWGraphSearch(RWGraphSearch.Mode.RANDOM_UNVISITED));
+        searchStrats.put(Algorithm.RANDOM_BACKTRACK, new RWGraphSearch(RWGraphSearch.Mode.HISTORY_BACKTRACK));
     }
 
     Algorithm getBFS() { return Algorithm.BFS; }
     Algorithm getDFS() { return Algorithm.DFS; }
-    Algorithm getRANDOM() { return Algorithm.RANDOM; }
+    Algorithm getRANDOM_FULL() { return Algorithm.RANDOM_FULL; }
+    Algorithm getRANDOM_UNVISITED() { return Algorithm.RANDOM_UNVISITED; }
+    Algorithm getRANDOM_BACKTRACK() { return Algorithm.RANDOM_BACKTRACK; }
 
     // parse dot file and creates its graph
      
@@ -79,7 +84,7 @@ public class DotGraph {
 
     // add a single node; will NOT add duplicates
     public void addNode(String label) {
-        nodes.add(label);
+        nodes.add(label.toUpperCase());
     }
 
     // remove a single node
@@ -137,13 +142,18 @@ public class DotGraph {
     // returns a string holding the data of the graph
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Nodes (").append(nodes.size()).append("): ").append(nodes).append("\n");
-        sb.append("Edges (").append(edges.size()).append("):\n");
+        StringBuilder sb1 = new StringBuilder();
+        StringBuilder sb2 = new StringBuilder();
+        sb1.append(nodes.size()).append("): ").append(nodes).append("\n");
+        sb2.append(edges.size()).append("):\n");
         for (Edge e : edges) {
-            sb.append("  ").append(e).append("\n");
+            sb2.append("  ").append(e).append("\n");
         }
-        return sb.toString();
+        String s1 = sb1.toString();
+        String s2 = sb2.toString();
+        String returnString = "Nodes (" + s1.toLowerCase() + "Edges (" + s2.toLowerCase();
+
+        return returnString;
     }
 
     // outputs the graph in text format
@@ -196,18 +206,114 @@ public class DotGraph {
     // return all neighbors of a given node
     public List<String> getNeighbors(String node) {
         return edges.stream()
-                .filter(e -> e.getStart().equals(node))
-                .map(Edge::getEnd)
-                .collect(Collectors.toList());
+                    .filter(e -> e.getStart().equalsIgnoreCase(node))
+                    .map(Edge::getEnd)
+                    .collect(Collectors.toList());
     }
 
-    // delegates BFS/DFS searches to template-based implementations using strategy pattern
+    // delegates BFS/DFS/Random searches to template-based implementations using strategy pattern
     public Path GraphSearch(String src, String dst, Algorithm algo) {
         GraphSearchTemplate strategy = searchStrats.get(algo);
         if (strategy == null) {     // if its not a real strat then it explodes but this shoooould never happen
             throw new IllegalArgumentException("Unknown algorithm: " + algo);
         }
-        return strategy.search(this, src, dst);
+        Path p = strategy.search(this, src, dst);
+        return p;
+    }
+
+
+    public void runRandomSearch(DotGraph graph, String s, String src, String dst) {
+
+        if (s == "full") {
+
+            System.out.println("Fully Random Search:");
+
+            int i = 0;
+            int numSuccesses = 0;
+            int diffPaths = 0;
+            while (i < 5) {
+                if (numSuccesses < 2) {
+                    // ensure that the first 2 go arounds always find the target node
+                    Path currPath = graph.GraphSearch(src, dst, Algorithm.RANDOM_FULL);
+                    if (currPath.doesPathReachDestination() == true) {
+                        i++;
+                        numSuccesses++;
+                        System.out.println("Attempt " + i + ": " + currPath.toString());
+                    }
+                }
+
+                else {
+                    Path currPath = graph.GraphSearch(src, dst, Algorithm.RANDOM_FULL);
+                    i++;
+                    System.out.println("Attempt " + i + ": " + currPath.toString());
+                    if (currPath.doesPathReachDestination() == true) {
+                        numSuccesses++;
+                    }
+                }
+            }
+        }
+        else if (s == "unvisited") {
+
+            System.out.println("Unvisited Random Search:");
+
+            int i = 0;
+            int numSuccesses = 0;
+            while (i < 5) {
+                if (numSuccesses < 2) {
+                    // ensure that the first 2 go arounds always find the target node
+                    Path currPath = graph.GraphSearch(src, dst, Algorithm.RANDOM_UNVISITED);
+                    if (currPath.doesPathReachDestination() == true) {
+                        i++;
+                        numSuccesses++;
+                        System.out.println("Attempt " + i + ": " + currPath.toString());
+                    }
+                }
+
+                else {
+                    Path currPath = graph.GraphSearch(src, dst, Algorithm.RANDOM_UNVISITED);
+                    i++;
+                    System.out.println("Attempt " + i + ": " + currPath.toString());
+                    if (currPath.doesPathReachDestination() == true) {
+                        numSuccesses++;
+                    }
+                }
+            }
+        }
+        else if (s == "backtrack") {
+            System.out.println("Backtrack Random Search:");
+
+            int i = 0;
+            int numSuccesses = 0;
+            while (i < 5) {
+                if (numSuccesses < 2) {
+                    // ensure that the first 2 go arounds always find the target node
+                    Path currPath = graph.GraphSearch(src, dst, Algorithm.RANDOM_BACKTRACK);
+                    if (currPath.doesPathReachDestination() == true) {
+                        i++;
+                        numSuccesses++;
+                        System.out.println("Attempt " + i + ": " + currPath.toString());
+                    }
+                }
+
+                else {
+                    Path currPath = graph.GraphSearch(src, dst, Algorithm.RANDOM_BACKTRACK);
+                    i++;
+                    System.out.println("Attempt " + i + ": " + currPath.toString());
+                    if (currPath.doesPathReachDestination() == true) {
+                        
+                        numSuccesses++;
+                    }
+                }
+            }
+        }
+        else if (s == "all") {
+            runRandomSearch(graph, "full", src, dst);
+            System.out.println();
+            runRandomSearch(graph, "unvisited", src, dst);
+            System.out.println();
+            runRandomSearch(graph, "backtrack", src, dst);
+            System.out.println();
+        }
     }
 
     // main
@@ -218,15 +324,33 @@ public class DotGraph {
             if (args.length > 0 && args[0].endsWith(".dot")) {
                 System.out.println("Parsing DOT file: " + args[0]);
                 graph = parseGraph(args[0]);
-            } else {
-                // or create new graph & add data manually
+            }
+            else {
                 graph = new DotGraph();
+            }
+            
+            /*
+            else {
+                // or create new graph & add data manually
                 graph.addNodes(new String[]{"A", "B", "C", "D"});
                 graph.addEdge("A", "B");
                 graph.addEdge("B", "C");
                 graph.addEdge("C", "A");
                 graph.addEdge("B", "D");
             }
+            */
+
+            // FOR DEMO: SET A SOURCE AND DESTINATION NODE (for the search algorithms)
+            System.out.println();
+            String startNode = "";
+            String endNode = "";
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Name of Start Node: ");
+            startNode = scanner.nextLine();
+            System.out.print("Name of Destination Node: ");
+            endNode = scanner.nextLine();
+
+            System.out.println();
 
             // print graph to console
             System.out.println(graph.toString());
@@ -240,17 +364,17 @@ public class DotGraph {
             // output image
             graph.outputGraphics("graph_output.png", "png");
 
-            System.out.println(graph.GraphSearch("A", "C", Algorithm.BFS).toString());
+            // print BFS path
+            System.out.println("BFS Path:");
+            System.out.println(graph.GraphSearch(startNode, endNode, Algorithm.BFS).getPathArray());
+            System.out.println();
 
-            System.out.println("Graph outputs generated successfully!  Yay :)");
+            // print DFS path
+            System.out.println("DFS Path:");
+            System.out.println(graph.GraphSearch(startNode, endNode, Algorithm.DFS).getPathArray());
+            System.out.println();
 
-            System.out.println(graph.GraphSearch("A", "C", Algorithm.DFS).toString());
-
-            System.out.println("Graph outputs generated successfully!  Yay :)");
-
-            System.out.println(graph.GraphSearch("A", "C", Algorithm.RANDOM).toString());
-
-            System.out.println("Graph outputs generated successfully!  Yay :)");
+            graph.runRandomSearch(graph, "all", startNode, endNode);
 
         // if it explodes :(
         } catch (IOException | InterruptedException e) {

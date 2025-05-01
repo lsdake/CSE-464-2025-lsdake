@@ -1,13 +1,26 @@
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Random;
 
-// Concrete Random Walk implementation using template and strategy patterns.
-// At each step, selects one random neighbor to continue.
+// Random walk using the template pattern with built-in variations
+
 public class RWGraphSearch extends GraphSearchTemplate {
-    private final Random random = new Random();
+    public enum Mode {
+        FULLY_RANDOM,
+        RANDOM_UNVISITED,
+        HISTORY_BACKTRACK
+    }
+
+    private final Mode mode;
+    private static final Random rnd = new Random();
+
+    public RWGraphSearch(Mode mode) {
+        super();
+        this.mode = mode;
+    }
 
     @Override
     protected Deque<PathNode> initFrontier() {
@@ -16,7 +29,6 @@ public class RWGraphSearch extends GraphSearchTemplate {
 
     @Override
     protected void frontierAdd(PathNode node) {
-        frontier.clear();
         frontier.addFirst(node);
     }
 
@@ -25,10 +37,44 @@ public class RWGraphSearch extends GraphSearchTemplate {
         return frontier.removeFirst();
     }
 
-    protected List<String> getNeighbors(String node) {
-        List<String> all = graph.getNeighbors(node);
-        if (all.isEmpty()) return Collections.emptyList();
-        String next = all.get(random.nextInt(all.size()));
-        return Collections.singletonList(next);
+    // Template calls planNext(...) to get possible neighbors to enqueue.
+    @Override
+    protected List<String> planNext(String current, List<String> visitedNames) {
+        List<String> nbrs = new ArrayList<>(graph.getNeighbors(current));
+        switch (mode) {
+            case FULLY_RANDOM:
+                if (nbrs.isEmpty()) return Collections.emptyList();
+                return Collections.singletonList(
+                    nbrs.get(rnd.nextInt(nbrs.size()))
+                );
+
+            case RANDOM_UNVISITED:
+                List<String> unvisited = new ArrayList<>();
+                for (String n : nbrs) {
+                    if (!visitedNames.contains(n)) {
+                        unvisited.add(n);
+                    }
+                }
+                if (unvisited.isEmpty()) return Collections.emptyList();
+                return Collections.singletonList(
+                    unvisited.get(rnd.nextInt(unvisited.size()))
+                );
+
+            case HISTORY_BACKTRACK:
+                List<String> unvis = new ArrayList<>();
+                for (String n : nbrs) {
+                    if (!visitedNames.contains(n)) unvis.add(n);
+                }
+                if (!unvis.isEmpty()) {
+                    return Collections.singletonList(
+                        unvis.get(rnd.nextInt(unvis.size()))
+                    );
+                }
+                // backtrack
+                return Collections.emptyList();
+
+            default:
+                return Collections.emptyList();
+        }
     }
 }
