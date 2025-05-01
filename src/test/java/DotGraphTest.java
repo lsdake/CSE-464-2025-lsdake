@@ -191,7 +191,7 @@ public class DotGraphTest {
         String output;
         
         if (graph.GraphSearch("a", "d", graph.getBFS()) != null) {
-            output = graph.GraphSearch("a", "d", graph.getBFS()).toString();
+            output = graph.GraphSearch("a", "d", graph.getBFS()).getPathArray();
         }
         else {
             output = "\"\"";
@@ -201,7 +201,7 @@ public class DotGraphTest {
 
         graph.addEdge("e", "f");
         if (graph.GraphSearch("e", "a", graph.getDFS()) != null) {
-            output = graph.GraphSearch("e", "a", graph.getDFS()).toString();
+            output = graph.GraphSearch("e", "a", graph.getDFS()).getPathArray();
         }
         else {
             output = "\"\"";
