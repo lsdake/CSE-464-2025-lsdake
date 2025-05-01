@@ -1,9 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents a node in path-finding algorithms, tracking parent and adjacency.
- */
 public class PathNode {
     private String name;
     private String parent;
