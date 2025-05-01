@@ -1,7 +1,7 @@
+// BFS implementation using the template pattern
 import java.util.Deque;
 import java.util.LinkedList;
-
-// BFS implementation using the template pattern
+import java.util.List;          // ← add this
 
 public class BFSGraphSearch extends GraphSearchTemplate {
     @Override
@@ -17,5 +17,16 @@ public class BFSGraphSearch extends GraphSearchTemplate {
     @Override
     protected PathNode frontierRemove() {
         return frontier.removeFirst();
+    }
+
+    @Override
+    protected List<String> planNext(String current, List<String> visitedNames) {
+        return super.planNext(current, visitedNames);
+    }
+
+    @Override
+    protected void onVisit(String pathSoFar) {
+        // printing for demo
+        System.out.println("visiting " + pathSoFar);
     }
 }
