@@ -58,7 +58,7 @@ public class DotGraphTest {
         String dotFilePath = "input.dot";
         graph.outputDOTGraph(dotFilePath);
         String content = Files.readString(Paths.get(dotFilePath));
-        assertTrue(content.contains("A -> B"), "DOT file should contain edge A -> B");
+        assertTrue(content.contains("a -> b"), "DOT file should contain edge a -> b");
         // cleanup
         new File(dotFilePath).delete();
     }
@@ -226,7 +226,7 @@ public class DotGraphTest {
         String output;
         
         if (graph.GraphSearch("a", "d", graph.getBFS()) != null) {
-            output = graph.GraphSearch("a", "d", graph.getBFS()).toString();
+            output = graph.GraphSearch("a", "d", graph.getBFS()).getPathArray();
         }
         else {
             output = "\"\"";
@@ -237,7 +237,7 @@ public class DotGraphTest {
         graph.addEdge("e", "f");
 
         if (graph.GraphSearch("e", "a", graph.getBFS()) != null) {
-            output = graph.GraphSearch("e", "a", graph.getBFS()).toString();
+            output = graph.GraphSearch("e", "a", graph.getBFS()).getPathArray();
         }
         else {
             output = "\"\"";
@@ -266,14 +266,14 @@ public class DotGraphTest {
         // do the dfs search
         String dfsOutput;
         if (graph.GraphSearch("a", "f", graph.getDFS()) != null) {
-            dfsOutput = graph.GraphSearch("a", "f", graph.getDFS()).toString();
+            dfsOutput = graph.GraphSearch("a", "f", graph.getDFS()).getPathArray();
         } else {
             dfsOutput = "";
         }
 
         String bfsOutput;
         if (graph.GraphSearch("a", "f", graph.getBFS()) != null) {
-            bfsOutput = graph.GraphSearch("a", "f", graph.getBFS()).toString();
+            bfsOutput = graph.GraphSearch("a", "f", graph.getBFS()).getPathArray();
         } else {
             bfsOutput = "";
         }
