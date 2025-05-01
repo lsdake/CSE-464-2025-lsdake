@@ -167,14 +167,14 @@ public class DotGraphTest {
         // remove edge that exists in the graph
         graph.removeEdge("a", "b");
         output = graph.edgesToString();
-        assertFalse(output.contains("a -> b"), "Graph should contain edge A -> B");
+        assertFalse(output.contains("a -> b"), "Graph should contain edge a -> b");
 
         // remove edge that DNE in the graph
         graph.removeEdge("c", "d");
         output = graph.edgesToString();
 
         System.out.println(output);
-        assertFalse(output.contains("c -> d"), "Graph should contain edge C -> D");
+        assertFalse(output.contains("c -> d"), "Graph should contain edge c -> d");
     }
 
     @Test
@@ -197,7 +197,7 @@ public class DotGraphTest {
             output = "\"\"";
         }
         
-        assertTrue(output.contains("a -> b -> d"), "Path should be \"a -> b -> d\"");
+        assertTrue(output.contains("Path{nodes=[Node{a}, Node{b}, Node{d}]}"), "Path should be \"Path{nodes=[Node{a}, Node{b}, Node{d}]}\"");
 
         graph.addEdge("e", "f");
         if (graph.GraphSearch("e", "a", graph.getDFS()) != null) {
@@ -231,8 +231,8 @@ public class DotGraphTest {
         else {
             output = "\"\"";
         }
-        
-        assertTrue(output.contains("a -> b -> d"), "Path should be \"a -> b -> d\"");
+        System.out.println(output);
+        assertTrue(output.contains("Path{nodes=[Node{a}, Node{b}, Node{d}]}"), "Path should be \"Path{nodes=[Node{a}, Node{b}, Node{d}]}\"");
         
         graph.addEdge("e", "f");
 
@@ -279,8 +279,8 @@ public class DotGraphTest {
         }
 
         // bfs path should be A -> B -> D -> F
-        assertTrue(bfsOutput.contains("a -> b -> d -> f"), "BFS path should be \"a -> b -> e -> f\"");
+        assertTrue(bfsOutput.contains("Path{nodes=[Node{a}, Node{b}, Node{d}, Node{f}]}"), "BFS path should be \"Path{nodes=[Node{a}, Node{b}, Node{d}, Node{f}]}\"");
         // dfs path should be A -> C -> E -> F 
-        assertTrue(dfsOutput.contains("a -> c -> e -> f"), "DFS path should be \"a -> c -> e -> f\"");
+        assertTrue(dfsOutput.contains("Path{nodes=[Node{a}, Node{c}, Node{e}, Node{f}]}"), "DFS path should be \"Path{nodes=[Node{a}, Node{c}, Node{e}, Node{f}]}\"");
     }
 }
